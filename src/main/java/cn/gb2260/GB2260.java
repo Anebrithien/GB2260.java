@@ -22,8 +22,8 @@ public class GB2260 {
         data = new HashMap<String, String>();
         provinces = new ArrayList<Division>();
         InputStream inputStream = getClass().getResourceAsStream("/data/" + revision.getCode() + ".txt");
-        BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
         try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
             while (r.ready()) {
                 String line = r.readLine();
                 String[] split = line.split("\t");
@@ -85,7 +85,7 @@ public class GB2260 {
         return provinces;
     }
 
-    public ArrayList<Division> getPrefectures(String code)  {
+    public ArrayList<Division> getPrefectures(String code) {
         ArrayList<Division> rv = new ArrayList<Division>();
 
         if (!Pattern.matches("^\\d{2}0{4}$", code)) {
@@ -110,7 +110,7 @@ public class GB2260 {
         return rv;
     }
 
-    public ArrayList<Division> getCounties(String code)  {
+    public ArrayList<Division> getCounties(String code) {
         ArrayList<Division> rv = new ArrayList<Division>();
 
         if (!Pattern.matches("^\\d+[1-9]0{2,3}$", code)) {
