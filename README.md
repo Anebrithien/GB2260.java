@@ -39,6 +39,7 @@ Update the pom.xml file in project
 GB2260 gb = new GB2260(); // with default revision 2014
 GB2260 gb = new GB2260(Revision.V2002); // specify the revision
 ```
+- **newers revision need to be added**
 
 Interface for GB2260.
 
