@@ -6,7 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GB2260 {
     private final Revision revision;
@@ -14,21 +16,22 @@ public class GB2260 {
     private ArrayList<Division> provinces;
 
     public GB2260() {
-        this(Revision.V2014);
+        this(Revision.STATS_201607);
     }
 
     public GB2260(Revision revision) {
         this.revision = revision;
-        data = new HashMap<String, String>();
-        provinces = new ArrayList<Division>();
-        InputStream inputStream = getClass().getResourceAsStream("/data/" + revision.getCode() + ".txt");
-        try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+        data = new HashMap<>();
+        provinces = new ArrayList<>();
+        String filePath = "/data/" + revision.getSource() + "/" + revision.getVersion() + ".tsv";
+        InputStream inputStream = getClass().getResourceAsStream(filePath);
+        try (BufferedReader r = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+
             while (r.ready()) {
                 String line = r.readLine();
                 String[] split = line.split("\t");
-                String code = split[0];
-                String name = split[1];
+                String code = split[2];
+                String name = split[3];
 
                 data.put(code, name);
 
@@ -56,7 +59,8 @@ public class GB2260 {
 
         Division division = new Division();
         division.setName(data.get(code));
-        division.setRevision(getRevision().getCode());
+        division.setSource(revision.getSource());
+        division.setRevision(revision.getVersion());
         division.setCode(code);
 
         if (Pattern.matches("^\\d{2}0{4}$", code)) {
@@ -71,9 +75,8 @@ public class GB2260 {
         }
 
         String prefectureCode = code.substring(0, 4) + "00";
-        division.setPrefecture(data.get(prefectureCode));
+        division.setPrefecture(data.get(prefectureCode) == null ? "市辖区" : data.get(prefectureCode));
 
-        division.setRevision(this.revision.getCode());
         return division;
     }
 
@@ -85,9 +88,7 @@ public class GB2260 {
         return provinces;
     }
 
-    public ArrayList<Division> getPrefectures(String code) {
-        ArrayList<Division> rv = new ArrayList<Division>();
-
+    public List<Division> getPrefectures(String code) {
         if (!Pattern.matches("^\\d{2}0{4}$", code)) {
             throw new InvalidCodeException("Invalid province code");
         }
@@ -99,20 +100,18 @@ public class GB2260 {
         Division province = getDivision(code);
 
         Pattern pattern = Pattern.compile("^" + code.substring(0, 2) + "\\d{2}00$");
-        for (String key : data.keySet()) {
-            if (pattern.matcher(key).matches()) {
-                Division division = getDivision(key);
-                division.setProvince(province.getName());
-                rv.add(division);
-            }
-        }
-
-        return rv;
+        return data.keySet()
+                   .stream()
+                   .filter(key -> pattern.matcher(key).matches())
+                   .map(key -> {
+                       Division division = getDivision(key);
+                       division.setProvince(province.getName());
+                       return division;
+                   })
+                   .collect(Collectors.toList());
     }
 
-    public ArrayList<Division> getCounties(String code) {
-        ArrayList<Division> rv = new ArrayList<Division>();
-
+    public List<Division> getCounties(String code) {
         if (!Pattern.matches("^\\d+[1-9]0{2,3}$", code)) {
             throw new InvalidCodeException("Invalid prefecture code");
         }
@@ -125,15 +124,15 @@ public class GB2260 {
         Division province = getDivision(code.substring(0, 2) + "0000");
 
         Pattern pattern = Pattern.compile("^" + code.substring(0, 4) + "\\d+$");
-        for (String key : data.keySet()) {
-            if (pattern.matcher(key).matches()) {
-                Division division = getDivision(key);
-                division.setProvince(province.getName());
-                division.setPrefecture(prefecture.getName());
-                rv.add(division);
-            }
-        }
-
-        return rv;
+        return data.keySet()
+                   .stream()
+                   .filter(key -> pattern.matcher(key).matches())
+                   .map(key -> {
+                       Division division = getDivision(key);
+                       division.setProvince(province.getName());
+                       division.setPrefecture(prefecture.getName());
+                       return division;
+                   })
+                   .collect(Collectors.toList());
     }
 }

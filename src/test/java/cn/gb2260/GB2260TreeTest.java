@@ -7,6 +7,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -23,21 +24,21 @@ public class GB2260TreeTest {
 
     @Test
     public void testGetProvinces() {
-        ArrayList<Division> provinces = gb2260.getProvinces();
+        List<Division> provinces = gb2260.getProvinces();
         assertNotNull(provinces);
         assertTrue("Should not be empty", provinces.size() > 0);
     }
 
     @Test
     public void testGetPrefectures() {
-        ArrayList<Division> data = gb2260.getPrefectures("110000");
+        List<Division> data = gb2260.getPrefectures("110000");
         assertNotNull(data);
         assertTrue("Should not be empty", data.size() > 0);
     }
 
     @Test
     public void testGetCounties() {
-        ArrayList<Division> data = gb2260.getCounties("110100");
+        List<Division> data = gb2260.getCounties("110100");
         assertNotNull(data);
         assertTrue("Should not be empty", data.size() > 0);
     }

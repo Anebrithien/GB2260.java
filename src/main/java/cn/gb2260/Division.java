@@ -3,6 +3,7 @@ package cn.gb2260;
 public class Division {
     private String name;
     private String code;
+    private String source;
     private String revision;
     private String province;
     private String prefecture;
@@ -21,6 +22,14 @@ public class Division {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public String getRevision() {
