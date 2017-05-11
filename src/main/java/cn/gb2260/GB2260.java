@@ -25,23 +25,17 @@ public class GB2260 {
         provinces = new ArrayList<>();
         String filePath = "/data/" + revision.getSource() + "/" + revision.getVersion() + ".tsv";
         InputStream inputStream = getClass().getResourceAsStream(filePath);
-        try (BufferedReader r = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
-
-            while (r.ready()) {
-                String line = r.readLine();
-                String[] split = line.split("\t");
-                String code = split[2];
-                String name = split[3];
-
-                data.put(code, name);
-
-                if (Pattern.matches("^\\d{2}0{4}$", code)) {
-                    Division division = new Division();
-                    division.setCode(code);
-                    division.setName(name);
-                    provinces.add(division);
-                }
-            }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+            reader.lines()
+                  .map(line -> line.split("\t"))
+                  .peek(split -> data.put(split[2], split[3]))
+                  .filter(split -> Pattern.matches("^\\d{2}0{4}$", split[2]))
+                  .forEach(split -> {
+                      Division division = new Division();
+                      division.setCode(split[2]);
+                      division.setName(split[3]);
+                      provinces.add(division);
+                  });
         } catch (IOException e) {
             System.err.println("Error in loading GB2260 data!");
             throw new RuntimeException(e);
