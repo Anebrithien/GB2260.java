@@ -15,7 +15,7 @@ Install with maven:
 
     $ git submodule update --init
     $ mvn clean package
-    $ mvn install:install-file -Dfile=target/GB2260-0.1.2.jar -DgroupId=cn.gb2260 -DartifactId=GB2260 -Dversion=0.1.2 -Dpackaging=jar
+    $ mvn install:install-file -Dfile=target/GB2260-0.1.3.jar -DgroupId=cn.gb2260 -DartifactId=GB2260 -Dversion=0.1.2 -Dpackaging=jar
 
 Update the pom.xml file in project
 
@@ -25,7 +25,7 @@ Update the pom.xml file in project
     <dependency>
         <groupId>cn.gb2260</groupId>
         <artifactId>GB2260</artifactId>
-        <version>0.1.2</version>
+        <version>0.1.3</version>
     </dependency>
     ...
 </dependencies>
@@ -37,7 +37,7 @@ Update the pom.xml file in project
 
 ```java
 GB2260 gb = new GB2260(); // with default revision STATS_201607
-GB2260 gb = new GB2260(Revision.STATS_200412); // specify the revision
+GB2260 gb = new GB2260(Revision.MCA_201801); // specify the revision
 ```
 - **newers revision need to be added**
 
@@ -95,8 +95,10 @@ gb.getCounties("110100")
 
 `Revision` contains a list of available revisions from two source(mca, stats)
   
-  **Note:** the default is `STATS_201607`, if you prefer mca, you may get some exception.
-  For example, data files from mca don't have `110100	市辖区`.
+  **Note:** The default is `STATS_201607`, you can choose 'MCA' or 'GB'.
+  See enum `Revision` for more details. 
+  
+  > All revision is supported now.
 
 ```java
 Revision.STATS_201607.getVersion() // return 201607

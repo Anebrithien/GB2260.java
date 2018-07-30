@@ -26,7 +26,7 @@ public class GB2260GetTest {
         Division data = gb2260.getDivision("110000");
         assertEquals("北京市", data.getName());
         assertEquals("北京市", data.toString());
-        assertEquals(Revision.STATS_201607.getVersion(), data.getRevision());
+        assertEquals(GB2260.DEFAULT_REVISION.getVersion(), data.getRevision());
         assertEquals("110000", data.getCode());
     }
 
@@ -50,6 +50,17 @@ public class GB2260GetTest {
     @Test
     public void testNull() {
         assertNull(gb2260.getDivision("999999"));
+    }
+
+
+    @Test
+    public void testMcaData() {
+        GB2260 mcaGB = new GB2260(Revision.MCA_201801);
+        Division data = mcaGB.getDivision("110101");
+        assertEquals("东城区", data.getName());
+        assertEquals("北京市", data.getProvince());
+        assertEquals("市辖区", data.getPrefecture());
+        assertEquals("北京市 市辖区 东城区", data.toString());
     }
 
     @Test

@@ -2,11 +2,16 @@ package cn.gb2260;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -14,9 +19,23 @@ public class GB2260 {
     private final Revision revision;
     private HashMap<String, String> data;
     private ArrayList<Division> provinces;
+    public static final Revision DEFAULT_REVISION = Revision.STATS_201607;
+    /**
+     * Direct-controlled municipalities of China
+     */
+    private static final Set<String> SPECIAL_CITY = new HashSet<>();
+    private static final String SP_NAME = "市辖区";
+
+    static {
+        // Note: MCA data don't contains "市辖区", we need to mock data for these four cities.
+        SPECIAL_CITY.add("110000"); // CN-11: Beijing
+        SPECIAL_CITY.add("120000"); // CN-12: Tianjin
+        SPECIAL_CITY.add("310000"); // CN-31: Shanghai
+        SPECIAL_CITY.add("500000"); // CN-50: Chongqing
+    }
 
     public GB2260() {
-        this(Revision.STATS_201607);
+        this(DEFAULT_REVISION);
     }
 
     public GB2260(Revision revision) {
@@ -24,25 +43,43 @@ public class GB2260 {
         data = new HashMap<>();
         provinces = new ArrayList<>();
         String filePath = "/data/" + revision.getSource() + "/" + revision.getVersion() + ".tsv";
-        InputStream inputStream = getClass().getResourceAsStream(filePath);
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+        boolean isMCA = isMCA(revision);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+            getClass().getResourceAsStream(filePath), StandardCharsets.UTF_8))) {
             reader.lines()
                   .map(line -> line.split("\t"))
-                  .peek(split -> data.put(split[2], split[3]))
-                  .filter(split -> Pattern.matches("^\\d{2}0{4}$", split[2]))
-                  .forEach(split -> {
-                      Division division = new Division();
-                      division.setCode(split[2]);
-                      division.setName(split[3]);
-                      provinces.add(division);
-                  });
+                  .peek(fillAllData(isMCA))
+                  .filter(checkIsProvince())
+                  .forEach(fillProvinces());
         } catch (IOException e) {
             System.err.println("Error in loading GB2260 data!");
             throw new RuntimeException(e);
         }
     }
 
-    public Division getDivision(String code) {
+  private Consumer<String[]> fillProvinces() {
+      return split -> {
+          Division division = new Division();
+          division.setCode(split[2]);
+          division.setName(split[3]);
+          provinces.add(division);
+      };
+  }
+
+  private Predicate<String[]> checkIsProvince() {
+      return split -> Pattern.matches("^\\d{2}0{4}$", split[2]);
+  }
+
+  private Consumer<String[]> fillAllData(boolean isMCA) {
+      return split -> {
+          data.put(split[2], split[3]);
+          if (isMCA && SPECIAL_CITY.contains(split[2])) {
+              data.put(split[2].substring(0, 3) + "100", SP_NAME);
+          }
+      };
+  }
+
+  public Division getDivision(String code) {
         if (code.length() != 6) {
             throw new InvalidCodeException("Invalid code");
         }
@@ -69,7 +106,7 @@ public class GB2260 {
         }
 
         String prefectureCode = code.substring(0, 4) + "00";
-        division.setPrefecture(data.get(prefectureCode) == null ? "市辖区" : data.get(prefectureCode));
+        division.setPrefecture(data.get(prefectureCode));
 
         return division;
     }
@@ -128,5 +165,9 @@ public class GB2260 {
                        return division;
                    })
                    .collect(Collectors.toList());
+    }
+
+    private boolean isMCA(Revision revision) {
+        return Objects.equals(revision.getSource(), "mca");
     }
 }
